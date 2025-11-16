@@ -1,10 +1,8 @@
 import sqlite3
 
-# Create database connection
 def get_connection():
     return sqlite3.connect("database.db", check_same_thread=False)
 
-# Create the table
 def create_table():
     conn = get_connection()
     cursor = conn.cursor()
@@ -20,7 +18,6 @@ def create_table():
     conn.commit()
     conn.close()
 
-# Insert new expense
 def insert_expense(date, category, amount, description):
     conn = get_connection()
     cursor = conn.cursor()
@@ -31,16 +28,14 @@ def insert_expense(date, category, amount, description):
     conn.commit()
     conn.close()
 
-# Fetch all expenses
 def fetch_expenses():
     conn = get_connection()
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM expenses")
+    cursor.execute("SELECT * FROM expenses ORDER BY date DESC")
     data = cursor.fetchall()
     conn.close()
     return data
 
-# Delete an expense
 def delete_expense(expense_id):
     conn = get_connection()
     cursor = conn.cursor()
