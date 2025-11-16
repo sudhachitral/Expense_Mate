@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Expense Tracker</title>
+
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1605902711622-cfb43c44367f');
+            background-size: cover;
+            background-position: center;
+            backdrop-filter: blur(2px);
+            color: #fff;
+        }
+
+        .container {
+            width: 85%;
+            margin: auto;
+            padding-top: 40px;
+        }
+
+        /* Navbar */
+        .navbar {
+            display: flex;
+            justify-content: space-between;
+            padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .navbar a {
+            color: #fff;
+            text-decoration: none;
+            font-size: 18px;
+            margin-right: 15px;
+        }
+
+        .navbar a:hover {
+            color: #ffd369;
+        }
+
+        /* Card */
+        .card {
+            background: rgba(0,0,0,0.55);
+            padding: 25px;
+            border-radius: 18px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.4);
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 12px;
+            background: rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            text-align: center;
+        }
+
+        th {
+            background: rgba(0,0,0,0.4);
+        }
+
+        .delete-btn {
+            padding: 6px 12px;
+            background: #ff4d4d;
+            border: none;
+            color: white;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #d90429;
+        }
+
+        .stats-box {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .stat {
+            background: rgba(255,255,255,0.15);
+            width: 32%;
+            text-align: center;
+            padding: 15px;
+            border-radius: 15px;
+        }
+
+        .stat h2 {
+            margin: 0;
+            font-size: 22px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <!-- NAVBAR -->
+    <div class="navbar">
+        <div>
+            <a href="/">Home</a>
+            <a href="/add">Add Expense</a>
+        </div>
+    </div>
+
+    <!-- STATISTICS -->
+    <div class="card">
+        <h1>Expense Summary</h1>
+        <div class="stats-box">
+            <div class="stat">
+                <h2>Total This Month: ₹{{ total_this_month }}</h2>
+            </div>
+            <div class="stat">
+                <h2>Biggest Expense: ₹{{ biggest_expense }}</h2>
+            </div>
+            <div class="stat">
+                <h2>Food Expenses: ₹{{ food_expenses }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- TABLE -->
+    <div class="card">
+        <h1>All Expenses</h1>
+        <table>
+            <tr>
+                <th>Date</th>
+                <th>Category</th>
+                <th>Amount</th>
+                <th>Description</th>
+                <th>Action</th>
+            </tr>
+
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e[1] }}</td>
+                <td>{{ e[2] }}</td>
+                <td>₹{{ e[3] }}</td>
+                <td>{{ e[4] }}</td>
+                <td>
+                    <a href="/delete/{{ e[0] }}">
+                        <button class="delete-btn">Delete</button>
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h2 style="text-align:center; margin-top: 20px;">Total Spent: ₹{{ total }}</h2>
+    </div>
+
+</div>
+
+<!-- Theme Toggle Button -->
+<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+<script>
+    // Load saved theme
+    document.addEventListener("DOMContentLoaded", () => {
+        const savedTheme = localStorage.getItem("theme");
+        if (savedTheme) document.body.classList.add(savedTheme);
+    });
+
+    function toggleTheme() {
+        if (document.body.classList.contains("light")) {
+            document.body.classList.remove("light");
+            document.body.classList.add("dark");
+            localStorage.setItem("theme", "dark");
+        } else {
+            document.body.classList.remove("dark");
+            document.body.classList.add("light");
+            localStorage.setItem("theme", "light");
+        }
+    }
+</script>
+
+<style>
+    /* Floating toggle */
+    .theme-toggle {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 10px 14px;
+        border-radius: 50%;
+        border: none;
+        cursor: pointer;
+        background: rgba(255,255,255,0.8);
+        box-shadow: 0px 3px 10px rgba(0,0,0,0.4);
+        font-size: 20px;
+    }
+
+    .theme-toggle:hover {
+        background: #ffd369;
+    }
+
+    /* Light Theme */
+    .light {
+        background: #f5f5f5 !important;
+        color: #222 !important;
+    }
+
+    .light .card {
+        background: #ffffffd9 !important;
+        color: #222 !important;
+    }
+
+    .light table td, 
+    .light table th {
+        background: #ffffffd0 !important;
+        color: #222 !important;
+    }
+
+    .light .navbar {
+        background: #ffffffd0 !important;
+        color: #222 !important;
+    }
+
+    /* Dark Theme */
+    .dark {
+        background: rgba(0,0,0,0.85) !important;
+        color: #fff !important;
+    }
+</style>
+
+</body>
+</html>
