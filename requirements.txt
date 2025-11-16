@@ -9,6 +9,4 @@ gunicorn==21.2.0
 streamlit==1.30.0
 pandas==2.1.1
 plotly==5.18.0
-plotly
-pandas
-sqlalchemy
+sqlalchemy==2.0.23
