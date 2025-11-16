@@ -1,0 +1,38 @@
+body {
+    font-family: Arial;
+    background: #f4f4f4;
+}
+
+.navbar {
+    background: #333;
+    padding: 15px;
+    color: white;
+}
+
+.navbar a {
+    color: white;
+    margin-left: 20px;
+}
+
+.container {
+    width: 80%;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 10px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+}
+
+.delete-btn {
+    color: red;
+}
