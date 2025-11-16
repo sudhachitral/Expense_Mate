@@ -1,86 +1,110 @@
-import streamlit as st
-import pandas as pd
-import plotly.express as px
-from db import create_table, insert_expense, fetch_expenses, delete_expense
+from flask import Flask, render_template, request, redirect
+import sqlite3
+import datetime
 
-st.set_page_config(
-    page_title="Expense Tracker",
-    page_icon="💰",
-    layout="wide"
-)
+app = Flask(__name__)
 
-# Load table
-create_table()
 
-st.title("💸 Expense Tracker (Advanced Version)")
+# Initialize the database and create table if not exists
+def init_db():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute('''CREATE TABLE IF NOT EXISTS expenses (
+                        id INTEGER PRIMARY KEY AUTOINCREMENT,
+                        date TEXT,
+                        category TEXT,
+                        amount REAL,
+                        description TEXT
+                    )''')
+    conn.commit()
+    conn.close()
 
-# Sidebar Filters
-st.sidebar.header("Filters")
-selected_category = st.sidebar.selectbox(
-    "Filter By Category",
-    ["All"] + ["food", "transport", "shopping", "bills", "others"]
-)
 
-search_text = st.sidebar.text_input("Search Description")
+@app.route('/')
+def index():
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
 
-# Add new expense
-with st.expander("➕ Add New Expense"):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        date = st.date_input("Date")
-    with col2:
-        category = st.selectbox("Category", ["food", "transport", "shopping", "bills", "others"])
-    with col3:
-        amount = st.number_input("Amount (₹)", min_value=0.0)
+    # Fetch all expenses
+    cursor.execute("SELECT * FROM expenses")
+    expenses = cursor.fetchall()
 
-    description = st.text_input("Description")
+    # Total sum of all expenses
+    cursor.execute("SELECT SUM(amount) FROM expenses")
+    total = cursor.fetchone()[0]
 
-    if st.button("Add Expense"):
-        insert_expense(str(date), category, amount, description)
-        st.success("Expense added successfully!")
+    # ---------- Extra Features: Summary ----------
 
-# Fetch Data
-rows = fetch_expenses()
-df = pd.DataFrame(rows, columns=["ID", "Date", "Category", "Amount", "Description"])
+    # Get current month and year
+    now = datetime.datetime.now()
+    current_month = now.strftime("%Y-%m")
+    
+    # Total This Month
+    cursor.execute("SELECT SUM(amount) FROM expenses WHERE strftime('%Y-%m', date) = ?", (current_month,))
+    total_this_month = cursor.fetchone()[0]
 
-# Apply Filters
-if selected_category != "All":
-    df = df[df["Category"] == selected_category]
+    # Biggest Expense
+    cursor.execute("SELECT MAX(amount) FROM expenses")
+    biggest_expense = cursor.fetchone()[0]
 
-if search_text.strip():
-    df = df[df["Description"].str.contains(search_text, case=False, na=False)]
+    # Food Expenses
+    cursor.execute("SELECT SUM(amount) FROM expenses WHERE LOWER(category) = 'food'")
+    food_expenses = cursor.fetchone()[0]
 
-# Summary Stats
-total_spent = df["Amount"].sum()
-monthly_total = total_spent
-biggest_expense = df["Amount"].max() if not df.empty else 0
-food_total = df[df["Category"] == "food"]["Amount"].sum()
+    conn.close()
 
-# Summary Cards
-col1, col2, col3 = st.columns(3)
-col1.metric("Total This Month", f"₹{monthly_total}")
-col2.metric("Biggest Expense", f"₹{biggest_expense}")
-col3.metric("Food Expenses", f"₹{food_total}")
+    return render_template(
+        "index.html",
+        expenses=expenses,
+        total=total if total else 0,
+        total_this_month=total_this_month if total_this_month else 0,
+        biggest_expense=biggest_expense if biggest_expense else 0,
+        food_expenses=food_expenses if food_expenses else 0
+    )
 
-# Charts
-if not df.empty:
-    colA, colB = st.columns(2)
 
-    with colA:
-        fig = px.pie(df, names="Category", values="Amount", title="Category Breakdown")
-        st.plotly_chart(fig, use_container_width=True)
+@app.route('/add', methods=['GET', 'POST'])
+def add_expense():
+    if request.method == 'POST':
+        # Get form data safely
+        date = request.form.get('date')
+        category = request.form.get('category')
+        amount = request.form.get('amount')
+        description = request.form.get('description')
 
-    with colB:
-        df_sorted = df.sort_values("Date")
-        fig2 = px.line(df_sorted, x="Date", y="Amount", title="Spending Trend")
-        st.plotly_chart(fig2, use_container_width=True)
+        # Convert amount to float
+        try:
+            amount = float(amount)
+        except:
+            amount = 0.0
 
-# Display Table
-st.subheader("📄 All Expenses")
-st.dataframe(df, use_container_width=True)
+        conn = sqlite3.connect('database.db')
+        cursor = conn.cursor()
 
-# Delete Option
-delete_id = st.number_input("Enter ID to Delete", min_value=1)
-if st.button("Delete Expense"):
-    delete_expense(delete_id)
-    st.warning("Expense Deleted!")
+        # Insert into database
+        cursor.execute("""
+            INSERT INTO expenses (date, category, amount, description)
+            VALUES (?, ?, ?, ?)
+        """, (date, category, amount, description))
+
+        conn.commit()
+        conn.close()
+
+        return redirect('/')
+
+    return render_template("add_expense.html")
+
+
+@app.route('/delete/<int:id>')
+def delete_expense(id):
+    conn = sqlite3.connect('database.db')
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM expenses WHERE id = ?", (id,))
+    conn.commit()
+    conn.close()
+    return redirect('/')
+
+
+if __name__ == "__main__":
+    init_db()
+    app.run(debug=True)
